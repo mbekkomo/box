@@ -25,11 +25,11 @@ commands.help()
 
   declare summary command
   if (( !$# )); then
-    echo "Usage: ${0##*/} subcommand [options] ..."
+    echo "Usage: ${0##*/} <subcommand> [options] ..."
     echo
     echo "A Bash dependency manager."
     echo
-    echo "===: Subcommands :==="
+    echo $'\e[1m━━━ Subcommands ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[m'
 
     while read -r var; do
       [[ "$var" == "declare -- __command_"* ]] || continue
@@ -52,10 +52,10 @@ commands.help()
     echo
 
     if declare -p "__args_$1" >/dev/null 2>&1 && (( ${#args[@]} )); then
-      echo "===: Arguments :==="
+      echo $'\e[1m━━━ Arguments ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[m'
       for i in "${!args[@]}"; do
         declare arg="${args[$i]}"
-        echo "  \`$arg' "$'\e[1m↴\e[m\n    '"${args_summary[$i]}"
+        echo "  $arg "$'\e[1m↴\e[m\n    '"${args_summary[$i]}"
       done
       echo
     fi
@@ -63,7 +63,7 @@ commands.help()
     if declare -p "__options_$1" >/dev/null 2>&1 \
     && (( ${#options[@]} ))
     then
-      echo "===: Options :==="
+      echo $'\e[1m━━━ Options ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[m'
       for i in "${!options[@]}"; do
         declare opt="${options[$i]}"
         echo "  $opt "$'\e[1m↴\e[m\n    '"${options_summary[$i]}"

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+#i
 
 declare -x utils_default_options_format="help:-h/--help"
 utils.default_options_handler()
@@ -98,11 +99,11 @@ commands.help()
 
   declare summary command
   if (( !$# )); then
-    echo "Usage: ${0##*/} subcommand [options] ..."
+    echo "Usage: ${0##*/} <subcommand> [options] ..."
     echo
     echo "A Bash dependency manager."
     echo
-    echo "===: Subcommands :==="
+    echo $'\e[1m━━━ Subcommands ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[m'
 
     while read -r var; do
       [[ "$var" == "declare -- __command_"* ]] || continue
@@ -125,10 +126,10 @@ commands.help()
     echo
 
     if declare -p "__args_$1" >/dev/null 2>&1 && (( ${#args[@]} )); then
-      echo "===: Arguments :==="
+      echo $'\e[1m━━━ Arguments ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[m'
       for i in "${!args[@]}"; do
         declare arg="${args[$i]}"
-        echo "  \`$arg' "$'\e[1m↴\e[m\n    '"${args_summary[$i]}"
+        echo "  $arg "$'\e[1m↴\e[m\n    '"${args_summary[$i]}"
       done
       echo
     fi
@@ -136,7 +137,7 @@ commands.help()
     if declare -p "__options_$1" >/dev/null 2>&1 \
     && (( ${#options[@]} ))
     then
-      echo "===: Options :==="
+      echo $'\e[1m━━━ Options ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[m'
       for i in "${!options[@]}"; do
         declare opt="${options[$i]}"
         echo "  $opt "$'\e[1m↴\e[m\n    '"${options_summary[$i]}"
@@ -152,6 +153,7 @@ commands.help()
 }
 
 
+
 (( $# )) || {
   commands.help >&2
   exit 1
@@ -159,11 +161,19 @@ commands.help()
 
 declare command="$1"
 shift
+if [[ "$(type -t "commands.$command")" != "function" ]]; then
+  echo "Usage: ${0##*/} <subcommand> [options] ..."
+  echo
+  echo "Error: unknown subcommand \`$command'"
+  exit 1
+fi
+
 declare command_options_format="__${command}_options_format"
 
 # shellcheck disable=SC2154 # it's in ./utils/commands.sh
 utils.extopts "commands.${command}_options_handler" "$utils_default_options_format${!command_options_format:+ ${!command_options_format}}" "$@"
 (( $? == 30 )) && exit
+# shellcheck disable=SC2046 # it's intended
 set -- $(utils.strip_options "$@")
 commands."$command" "$@"
 exit "$?"
