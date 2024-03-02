@@ -4,7 +4,8 @@ utils.default_options_handler()
   declare command="$1"
   shift
   (( $1 )) && {
-    declare -x errmsg="$2"
+    declare -gx errmsg="$2"
+    return 1
   }
 
   case "$2" in
@@ -20,5 +21,5 @@ utils.strip_options()
     [[ "$arg" == -* ]] && unset "args[$i]"
     [[ "$arg" == -- ]] && break
   done
-  set -- "${args[@]}"
+  echo "${args[@]}"
 }

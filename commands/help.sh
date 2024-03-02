@@ -1,7 +1,7 @@
 __command_help="help"
 __summary_help="Prints this message and subcommand usage."
 __args_help=("[subcommand]")
-__args_summary_help=("Usage of a subcommand.")
+__args_summary_help=("A subcommand to see it's usage.")
 __options_help=("-h, --help")
 __options_summary_help=("Prints usage of this subcommand.")
 __help_options_format=""

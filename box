@@ -6,7 +6,8 @@ utils.default_options_handler()
   declare command="$1"
   shift
   (( $1 )) && {
-    declare -x errmsg="$2"
+    declare -gx errmsg="$2"
+    return 1
   }
 
   case "$2" in
@@ -22,7 +23,7 @@ utils.strip_options()
     [[ "$arg" == -* ]] && unset "args[$i]"
     [[ "$arg" == -- ]] && break
   done
-  set -- "${args[@]}"
+  echo "${args[@]}"
 }
 # shellcheck shell=bash
 
@@ -73,7 +74,7 @@ utils.extopts()
 __command_help="help"
 __summary_help="Prints this message and subcommand usage."
 __args_help=("[subcommand]")
-__args_summary_help=("Usage of a subcommand.")
+__args_summary_help=("A subcommand to see it's usage.")
 __options_help=("-h, --help")
 __options_summary_help=("Prints usage of this subcommand.")
 __help_options_format=""
@@ -163,6 +164,6 @@ declare command_options_format="__${command}_options_format"
 # shellcheck disable=SC2154 # it's in ./utils/commands.sh
 utils.extopts "commands.${command}_options_handler" "$utils_default_options_format${!command_options_format:+ ${!command_options_format}}" "$@"
 (( $? == 30 )) && exit
-utils.strip_options "$@"
+set -- $(utils.strip_options "$@")
 commands."$command" "$@"
 exit "$?"

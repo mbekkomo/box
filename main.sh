@@ -15,6 +15,6 @@ declare command_options_format="__${command}_options_format"
 # shellcheck disable=SC2154 # it's in ./utils/commands.sh
 utils.extopts "commands.${command}_options_handler" "$utils_default_options_format${!command_options_format:+ ${!command_options_format}}" "$@"
 (( $? == 30 )) && exit
-utils.strip_options "$@"
+set -- $(utils.strip_options "$@")
 commands."$command" "$@"
 exit "$?"
