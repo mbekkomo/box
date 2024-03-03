@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
-#i
 
 #@include ./utils/*.sh
 #@include ./commands/*.sh
-
 
 (( $# )) || {
   commands.help >&2
@@ -13,9 +11,11 @@
 declare command="$1"
 shift
 if [[ "$(type -t "commands.$command")" != "function" ]]; then
-  echo "Usage: ${0##*/} <subcommand> [options] ..."
-  echo
-  echo "Error: unknown subcommand \`$command'"
+  {
+    echo "Usage: ${0##*/} <subcommand> [options] ..."
+    echo
+    echo "Error: unknown subcommand \`$command'"
+  } >&2
   exit 1
 fi
 
