@@ -1,12 +1,14 @@
-__command_help="help"
-__summary_help="Prints this message and subcommand usage."
-__args_help=("[subcommand]")
-__args_summary_help=("A subcommand to see it's usage.")
-__options_help=("-h, --help")
-__options_summary_help=("Prints usage of this subcommand.")
-__help_options_format=""
+cmdinfo.help()
+{
+  summary="Prints this message and subcommand usage"
+  args=("[subcommand]")
+  args_summary=("A subcommand to see it's usage.")
+  options=("-h, --help")
+  options_summary=("Prints subcommand usage.")
+  options_format=""
+}
 
-commands.help_options_handler()
+options_handler.help()
 {
   utils.default_options_handler help "$@"
 }
@@ -31,27 +33,24 @@ commands.help()
     echo
     echo $'\e[1m━━━ Subcommands ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[m'
 
-    while read -r var; do
-      [[ "$var" == "declare -- __command_"* ]] || continue
-      : "${var##*-- }"
+    while read -r cmd; do
+      [[ "$cmd" == "declare -f commands."* ]] || continue
+      : "${cmd##*-f commands.}"
       command="${_%%=*}"
-      summary="__summary_${command##*_}"
-      echo "  ${!command} "$'\e[1m↴\e[m\n    '"${!summary}"
-    done <<<"$(declare -p)"
+      cmdinfo."$command"
+      echo "  $command "$'\e[1m↴\e[m\n    '"$summary"
+    done <<<"$(declare -pF)"
 
     echo
     echo "For more information, try add \`-h' flag to a subcommand or pass an subcommand to \`help'."
   elif [[ "$(type -t "commands.$1")" == "function" ]]; then
-    summary="__summary_$1"
-    declare -n args="__args_$1" args_summary="__args_summary_$1"
-    declare -n options="__options_$1" options_summary="__options_summary_$1"
-
+    cmdinfo."$1"
     echo "Usage: ${0##*/} $1 [options]${args[*]:+ ${args[*]}}"
     echo
-    echo "${!summary}"
+    echo "${summary}"
     echo
 
-    if declare -p "__args_$1" >/dev/null 2>&1 && (( ${#args[@]} )); then
+    if (( ${#args[@]} )); then
       echo $'\e[1m━━━ Arguments ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[m'
       for i in "${!args[@]}"; do
         declare arg="${args[$i]}"
@@ -60,9 +59,7 @@ commands.help()
       echo
     fi
 
-    if declare -p "__options_$1" >/dev/null 2>&1 \
-    && (( ${#options[@]} ))
-    then
+    if (( ${#options[@]} )); then
       echo $'\e[1m━━━ Options ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[m'
       for i in "${!options[@]}"; do
         declare opt="${options[$i]}"

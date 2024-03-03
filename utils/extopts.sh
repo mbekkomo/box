@@ -6,15 +6,15 @@ utils.extopts()
   shift
   shift
 
-  declare -A options options_needargs
+  declare -A options_ options_needargs
   while read -r -d " " fmt; do
     declare iden="${fmt%%:*}" body="${fmt#*:}"
     declare longopt="${body#*/}" shortopt="${body%/*}"
     declare passarg=0
     [[ "$fmt" == *: ]] && passarg=1
   
-    [[ "$longopt" == "." ]] || options["$longopt"]+="$iden"
-    [[ "$shortopt" == "." ]] || options["$shortopt"]+="$iden"
+    [[ "$longopt" == "." ]] || options_["$longopt"]+="$iden"
+    [[ "$shortopt" == "." ]] || options_["$shortopt"]+="$iden"
     (( passarg )) && options_needargs["$iden"]=1
   done <<<"$format"
 
@@ -22,11 +22,11 @@ utils.extopts()
     [[ "$1" == -* ]] || { shift; continue; }
     declare err=0 errmsg opt="$1" iden arg
 
-    if [[ -z "${options[$opt]}" ]]; then
+    if [[ -z "${options_[$opt]}" ]]; then
       err=1
       errmsg="invalid option: $opt"
     else
-      iden="${options[$opt]}"
+      iden="${options_[$opt]}"
     fi
 
     if (( !err && options_needargs["$iden"] )); then
