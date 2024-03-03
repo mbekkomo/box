@@ -75,5 +75,6 @@ commands.help()
       echo
       echo "Error: unknown subcommand \`$1'"
     } >&2
+    return 1
   fi
 }

@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-#i
 
 declare -x utils_default_options_format="help:-h/--help"
 utils.default_options_handler()
@@ -149,9 +148,16 @@ commands.help()
       echo
       echo "Error: unknown subcommand \`$1'"
     } >&2
+    return 1
   fi
 }
-
+__command_install="install"
+__summary_install="Installs dependencies from \`Boxfile.sh'."
+__options_install=(
+  "-v, --verbose"
+  "-q, --quiet"
+  "-f, --file"
+)
 
 
 (( $# )) || {
@@ -162,9 +168,11 @@ commands.help()
 declare command="$1"
 shift
 if [[ "$(type -t "commands.$command")" != "function" ]]; then
-  echo "Usage: ${0##*/} <subcommand> [options] ..."
-  echo
-  echo "Error: unknown subcommand \`$command'"
+  {
+    echo "Usage: ${0##*/} <subcommand> [options] ..."
+    echo
+    echo "Error: unknown subcommand \`$command'"
+  } >&2
   exit 1
 fi
 
