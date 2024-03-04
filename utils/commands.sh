@@ -23,3 +23,8 @@ utils.strip_options()
   done
   echo "${args[@]}"
 }
+
+utils.has_command()
+{
+  command -v "$1" >/dev/null
+}
