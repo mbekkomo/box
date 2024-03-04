@@ -12,7 +12,7 @@ function cmd(c)
 /^#@([-_[:alnum:]]+) ?(.*)/ \
 {
     sub(/^#@/, "");
-    print cmd("bash scripts/amalg.sh " $0);
+    print cmd("bash " amalg_script " \"" $0 "\"");
     next;
 } 
 {

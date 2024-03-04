@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+shopt -s extglob
+
 amalgs.include()
 {
   cat "$@" | sed 's/^#\(#\|!\).*//'
@@ -7,4 +9,4 @@ amalgs.include()
 
 cmd="$1"
 shift
-amalgs."$cmd" "$@"
+eval "amalgs.$cmd $*"

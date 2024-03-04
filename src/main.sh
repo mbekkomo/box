@@ -2,6 +2,7 @@
 
 #@include ./utils/*.sh
 #@include ./commands/*.sh
+#@include !(main.sh|!(*.sh))
 
 (( $# )) || {
   commands.help >&2

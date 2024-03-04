@@ -2,5 +2,6 @@
 
 task.amalg()
 {
-  awk -f ./scripts/amalg.awk < main.sh > box
+  cd src ||:
+  awk -v amalg_script=../scripts/amalg.sh -f ../scripts/amalg.awk < main.sh > ../bin/box
 }
