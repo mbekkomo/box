@@ -9,7 +9,7 @@ core.resolver.parse_boxfile()
 {
   declare oldpath="$PATH"
   export PATH=""
-  enable -n command exec trap
+  utils.disable_builtin command exec trap
 
   declare -ga deps
   declare i=1
@@ -49,9 +49,11 @@ core.resolver.parse_boxfile()
     esac
   }
 
+
+
   source ./boxfile.sh
   
-  enable command exec trap
+  unset -f command exec trap
   unset -f dependency src
   unset -n current_dep
   unset current_dep
