@@ -1,5 +1,45 @@
 #!/usr/bin/env bash
 
+utils.detect_color()
+{
+  [[ -n "$NO_COLOR" ]] && return 1
+  [[ "$FORCE_COLOR" == @(1|2|3) ]] && return 0
+  [[ "$FORCE_COLOR" == "0" ]] && return 1
+  [[ "$TERM" == "dumb" ]] && return 1
+  [[ -t 1 ]] && return 0
+  return 1
+}
+
+declare -A ansi_codes=(
+  [reset]=0           [black]=30     [bgblack]=40
+  [bold]=1            [red]=31       [bgred]=41
+  [dim]=2             [green]=32     [bggreen]=42
+  [italic]=3          [yellow]=33    [bgyellow]=43
+  [underline]=4       [blue]=34      [bgblue]=44
+  [blink]=5           [magenta]=35   [bgmagenta]=45
+  [reverse]=7         [cyan]=36      [bgcyan]=46
+  [hidden]=8          [white]=37     [bgwhite]=47
+  [strikethrough]=9   [default]=39   [bgdefault]=49
+)
+
+utils.color()
+{
+  utils.detect_color || return 1
+  declare args=("$@")
+  declare txt="${args[$#-1]}"
+  while (( $# - 1 )); do
+    printf -v buff "$buff\x1b[%dm" "${ansi_codes[$1]}"
+    shift
+  done
+  printf -v reset "\x1b[%dm" "${ansi_codes[reset]}"
+  echo "$buff$txt$reset"
+}
+utils.disable_builtin()
+{
+  while (( $# )); do
+    eval "$1() { :; }"
+  done
+}
 declare -x utils_default_options_format="help:-h/--help"
 utils.default_options_handler()
 {
@@ -109,7 +149,7 @@ commands.help()
     echo
     echo "A Bash dependency manager."
     echo
-    echo $'\e[1m━━━ Subcommands ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[m'
+    utils.color bold "━━━ Subcommands ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
     while read -r cmd; do
       [[ "$cmd" == "declare -f commands."* ]] || continue
@@ -129,19 +169,19 @@ commands.help()
     echo
 
     if (( ${#args[@]} )); then
-      echo $'\e[1m━━━ Arguments ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[m'
+      utils.color bold "━━━ Arguments ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
       for i in "${!args[@]}"; do
         declare arg="${args[$i]}"
-        echo "  $arg "$'\e[1m↴\e[m\n    '"${args_summary[$i]}"
+        echo "  $arg "$'↴\n    '"${args_summary[$i]}"
       done
       echo
     fi
 
     if (( ${#options[@]} )); then
-      echo $'\e[1m━━━ Options ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[m'
+      utils.color bold "\e[1m━━━ Options ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[m"
       for i in "${!options[@]}"; do
         declare opt="${options[$i]}"
-        echo "  $opt "$'\e[1m↴\e[m\n    '"${options_summary[$i]}"
+        echo "  $opt "$'↴\n    '"${options_summary[$i]}"
       done
     fi
   else
@@ -172,7 +212,7 @@ core.resolver.parse_boxfile()
 {
   declare oldpath="$PATH"
   export PATH=""
-  enable -n command exec trap
+  utils.disable_builtin command exec trap
 
   declare -ga deps
   declare i=1
@@ -212,9 +252,11 @@ core.resolver.parse_boxfile()
     esac
   }
 
+
+
   source ./boxfile.sh
   
-  enable command exec trap
+  unset -f command exec trap
   unset -f dependency src
   unset -n current_dep
   unset current_dep
