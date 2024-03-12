@@ -31,7 +31,7 @@ commands.help()
     echo
     echo "A Bash dependency manager."
     echo
-    utils.color bold "━━━ Subcommands ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    utils.echo_color bold "━━━ Subcommands ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
     while read -r cmd; do
       [[ "$cmd" == "declare -f commands."* ]] || continue
@@ -51,7 +51,7 @@ commands.help()
     echo
 
     if (( ${#args[@]} )); then
-      utils.color bold "━━━ Arguments ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      utils.echo_color bold "━━━ Arguments ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
       for i in "${!args[@]}"; do
         declare arg="${args[$i]}"
         echo "  $arg "$'↴\n    '"${args_summary[$i]}"
@@ -60,7 +60,7 @@ commands.help()
     fi
 
     if (( ${#options[@]} )); then
-      utils.color bold "\e[1m━━━ Options ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[m"
+      utils.echo_color bold "━━━ Options ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
       for i in "${!options[@]}"; do
         declare opt="${options[$i]}"
         echo "  $opt "$'↴\n    '"${options_summary[$i]}"

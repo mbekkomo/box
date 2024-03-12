@@ -1,11 +1,11 @@
 spin()
 {
-  declare spinner=("—" "\\" "|" "/")
+  declare spinner=("⢎⡰" "⢎⡡" "⢎⡑" "⢎⠱" "⠎⡱" "⢊⡱" "⢌⡱" "⢆⡱")
   declare i=0
   while :; do
-    (( i > 3 )) && i=0
+    (( i > (${#spinner[@]}-1) )) && i=0
     printf "\r%s test" "${spinner[$i]}"
-    sleep 1
+    sleep .3
     (( i++ ))
   done &
   declare pid="$!"

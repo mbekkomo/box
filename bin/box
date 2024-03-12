@@ -6,9 +6,12 @@ utils.detect_color()
   [[ "$FORCE_COLOR" == @(1|2|3) ]] && return 0
   [[ "$FORCE_COLOR" == "0" ]] && return 1
   [[ "$TERM" == "dumb" ]] && return 1
-  [[ -t 1 ]] && return 0
+  [[ -n "$COLORTERM" ]] && return 0
   return 1
 }
+
+utils.detect_color
+color_level="$?"
 
 declare -A ansi_codes=(
   [reset]=0           [black]=30     [bgblack]=40
@@ -22,17 +25,27 @@ declare -A ansi_codes=(
   [strikethrough]=9   [default]=39   [bgdefault]=49
 )
 
-utils.color()
+utils.raw_color()
 {
-  utils.detect_color || return 1
+  (( color_level )) && return 1
   declare args=("$@")
   declare txt="${args[$#-1]}"
   while (( $# - 1 )); do
     printf -v buff "$buff\x1b[%dm" "${ansi_codes[$1]}"
     shift
   done
-  printf -v reset "\x1b[%dm" "${ansi_codes[reset]}"
-  echo "$buff$txt$reset"
+  printf "%s" "$buff$txt"
+}
+
+utils.color()
+{
+  printf "%s\x1b[m" "$(utils.raw_color "$@")"
+}
+
+utils.echo_color()
+{
+  utils.color "$@"
+  echo
 }
 utils.disable_builtin()
 {
@@ -115,6 +128,32 @@ utils.extopts()
     shift
   done
 }
+utils.tobyte()
+{
+  for (( i=0; i<${#1}; i++ )); do
+    printf "%x" "'${1:i:1}"
+  done
+}
+
+utils.strip_space()
+{
+  declare buff="$1"
+  for (( i=0; i<${#buff}; i++ )); do
+     if [[ "${buff:0:1}" == [[:space:]] ]]; then
+       buff="${buff:1:${#buff}}"
+     else
+       break
+     fi
+  done
+  for (( i=${#buff}-1; i>0; i-- )); do
+    if [[ "${buff: -1:${#buff}}" == [[:space:]] ]]; then
+      buff="${buff:0:${#buff}-1}"
+    else
+      break
+    fi
+  done
+  echo "$buff"
+}
 
 cmdinfo.help()
 {
@@ -149,7 +188,7 @@ commands.help()
     echo
     echo "A Bash dependency manager."
     echo
-    utils.color bold "━━━ Subcommands ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    utils.echo_color bold "━━━ Subcommands ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
     while read -r cmd; do
       [[ "$cmd" == "declare -f commands."* ]] || continue
@@ -169,7 +208,7 @@ commands.help()
     echo
 
     if (( ${#args[@]} )); then
-      utils.color bold "━━━ Arguments ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      utils.echo_color bold "━━━ Arguments ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
       for i in "${!args[@]}"; do
         declare arg="${args[$i]}"
         echo "  $arg "$'↴\n    '"${args_summary[$i]}"
@@ -178,7 +217,7 @@ commands.help()
     fi
 
     if (( ${#options[@]} )); then
-      utils.color bold "\e[1m━━━ Options ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[m"
+      utils.echo_color bold "━━━ Options ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
       for i in "${!options[@]}"; do
         declare opt="${options[$i]}"
         echo "  $opt "$'↴\n    '"${options_summary[$i]}"
@@ -203,24 +242,23 @@ __options_install=(
 
 
 
-core.resolver.temp_dir()
+resolver.temp_dir()
 {
   echo "./.box/temp/$1"
 }
 
-core.resolver.parse_boxfile()
+resolver.parse_boxfile()
 {
   declare oldpath="$PATH"
   export PATH=""
   utils.disable_builtin command exec trap
 
   declare -ga deps
-  declare i=1
   
   dependency()
   {
-    declare depname="dep_$i"
-    (( i++ ))
+    declare depname
+    depname="dep_$(utils.tobyte "$(utils.strip_space "$1")")"
 
     declare -gA "$depname"
     deps+=("$depname")
@@ -229,7 +267,7 @@ core.resolver.parse_boxfile()
 
     declare -gn current_dep="$depname"
     current_dep+=(
-      [dependency]="$1"
+    [dependency]="$(utils.strip_space "$1")"
     )
   }
   
@@ -252,8 +290,6 @@ core.resolver.parse_boxfile()
     esac
   }
 
-
-
   source ./boxfile.sh
   
   unset -f command exec trap
@@ -263,6 +299,12 @@ core.resolver.parse_boxfile()
   export PATH="$oldpath"
 }
 
+
+(( BASH_VERSION[1] < 4 
+|| BASH_VERSION[1] == 4 && BASH_VERSION[1] < 2 )) || {
+  utils.color red "Box requires Bash 4.2+ to work!" >&2
+  exit 1
+}
 
 (( $# )) || {
   commands.help >&2
@@ -290,3 +332,4 @@ utils.extopts "options_handler.${command}" "$utils_default_options_format${optio
 set -- $(utils.strip_options "$@")
 
 commands."$command" "$@"
+

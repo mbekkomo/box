@@ -4,6 +4,12 @@
 #@include ./commands/*.sh
 #@include !(main.sh|!(*.sh))
 
+(( BASH_VERSION[1] < 4 
+|| BASH_VERSION[1] == 4 && BASH_VERSION[1] < 2 )) || {
+  utils.color red "Box requires Bash 4.2+ to work!" >&2
+  exit 1
+}
+
 (( $# )) || {
   commands.help >&2
   exit 1
@@ -30,3 +36,4 @@ utils.extopts "options_handler.${command}" "$utils_default_options_format${optio
 set -- $(utils.strip_options "$@")
 
 commands."$command" "$@"
+

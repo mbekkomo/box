@@ -4,9 +4,12 @@ utils.detect_color()
   [[ "$FORCE_COLOR" == @(1|2|3) ]] && return 0
   [[ "$FORCE_COLOR" == "0" ]] && return 1
   [[ "$TERM" == "dumb" ]] && return 1
-  [[ -t 1 ]] && return 0
+  [[ -n "$COLORTERM" ]] && return 0
   return 1
 }
+
+utils.detect_color
+color_level="$?"
 
 declare -A ansi_codes=(
   [reset]=0           [black]=30     [bgblack]=40
@@ -20,15 +23,25 @@ declare -A ansi_codes=(
   [strikethrough]=9   [default]=39   [bgdefault]=49
 )
 
-utils.color()
+utils.raw_color()
 {
-  utils.detect_color || return 1
+  (( color_level )) && return 1
   declare args=("$@")
   declare txt="${args[$#-1]}"
   while (( $# - 1 )); do
     printf -v buff "$buff\x1b[%dm" "${ansi_codes[$1]}"
     shift
   done
-  printf -v reset "\x1b[%dm" "${ansi_codes[reset]}"
-  echo "$buff$txt$reset"
+  printf "%s" "$buff$txt"
+}
+
+utils.color()
+{
+  printf "%s\x1b[m" "$(utils.raw_color "$@")"
+}
+
+utils.echo_color()
+{
+  utils.color "$@"
+  echo
 }
