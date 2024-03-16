@@ -1,5 +1,7 @@
 # shellcheck disable=SC2317
 
+resolver_msg_reset=$(utils.raw_color red '')
+
 resolver.validate_depname()
 {
   for (( i=0; i<${#1}; i++ )); do
@@ -12,17 +14,19 @@ resolver.validate_depname()
 resolver.parse_error()
 {
   unset -f exit
-  echo "Failed to parse boxfile.sh" >&2
+  utils.echo_color cyan "Failed to parse Box.sh" >&2
   for s in "$@"; do
-    msg.error "$s" >&2
-  done
+    utils.color dim red "» "
+    utils.echo_color red "$*"
+  done >&2
   exit 1
 }
 
 resolver.check_currentdep()
 {
-  [[ -R current_dep ]] ||
-    resolver.parse_error "Trying to use directive $(utils.color cyan "${FUNCNAME[1]}") outside dependency scope."
+  [[ -R current_dep ]] || {
+    resolver.parse_error "Trying to use directive $(utils.color blue "${FUNCNAME[1]}")$resolver_msg_reset outside dependency scope."
+  }
 }
 
 resolver.get_named_params()
@@ -48,15 +52,15 @@ resolver.check_syntax()
   while read -r err; do
     [[ "$err" =~ line\ ([0-9]+?): ]]
     errs+=("In line ${BASH_REMATCH[1]}, ${err##*: }.")
-  done < <(bash -n ./boxfile.sh 2>&1)
+  done < <(bash -n ./Box.sh 2>&1)
   (( ${#errs[@]} )) && resolver.parse_error "${errs[@]}"
 }
 
 resolver.parse_boxfile()
 {
-  declare -ga deps
+  declare -ga project_dependencies
 
-  [[ -f ./boxfile.sh ]] ||
+  [[ -f ./Box.sh ]] ||
     resolver.parse_error "File not found."
   resolver.check_syntax
   
@@ -68,17 +72,17 @@ resolver.parse_boxfile()
   dependency()
   {
     resolver.validate_depname "$1" ||
-      msg.parse_error "Dependency with identifier $(utils.color blue "$1") must only contain alphanumeric and underscore characters."
+      resolver.parse_error "Dependency with identifier $(utils.color blue "$1")$resolver_msg_reset must only contain alphanumeric and underscore characters."
       
-    declare depname="dep_$1"
+    declare dependency_name="dep_$1"
 
-    declare -gA "$depname"
-    deps+=("$depname")
-    [[ -R current_dep ]] &&
-      unset -n current_dep
+    declare -gA "$dependency_name"
+    project_dependencies+=("$dependency_name")
+    [[ -R dependency ]] &&
+      unset -n dependency
 
-    declare -gn current_dep="$depname"
-    current_dep+=(
+    declare -gn dependency="$dependency_name"
+    dependency+=(
       [id]="$1"
       [name]="$1"
     )
@@ -87,7 +91,7 @@ resolver.parse_boxfile()
   as()
   {
     resolver.check_currentdep
-    current_dep+=(
+    dependency+=(
       [name]="$(utils.strip_space "$1")"
     )
   }
@@ -99,13 +103,13 @@ resolver.parse_boxfile()
     shift
     case "$type" in
       git|tarball)
-        current_dep+=(
+        dependency+=(
           [srctype]="$type"
           [srcurl]="$1"
         )
         ;;
       *)
-        resolver.parse_error "Unknown source type $(utils.color blue "$type") in scope $(utils.color green "${current_dep[id]}")."
+        resolver.parse_error "Unknown source type $(utils.color blue "$type")$resolver_msg_reset in scope $(utils.color blue "${dependency[id]}")$resolver_msg_reset."
 
         ;;
     esac
@@ -115,11 +119,10 @@ resolver.parse_boxfile()
   {
     resolver.check_currentdep
     resolver.get_named_params "$@"
-    current_dep+=(
+    dependency+=(
       [hook-atfetch]="$param_atfetch"
       [hook-atupdate]="$param_atupdate"
       [hook-atinstall]="$param_atinstall"
-      [hook-externalcheck]="$param_externalcheck"
     )
   }
 
@@ -129,7 +132,7 @@ resolver.parse_boxfile()
     resolver.get_named_params "$@"
     declare oldifs="$IFS"
     IFS=$'\n'
-    current_dep+=(
+    dependency+=(
       [install-bin]="${param_bin[*]}"
       [install-script]="${param_script[*]}"
     )
@@ -146,17 +149,37 @@ resolver.parse_boxfile()
     done
     declare oldifs="$IFS"
     IFS=$'\n'
-    current_dep+=(
+    dependency+=(
       [dependencies]="${dependencies[*]}"
     )
     IFS="$oldifs"
   }
 
-  source ./boxfile.sh
+  declare output
+  output="$(source ./Box.sh 2>&1)"
+
+  # shellcheck disable=SC2181
+  (( $? )) &&
+    resolver.parse_error $'Parsing the file returned non-zero exit code:\n'"${output:- <no output>}"
   
   unset -f "${builtins[@]}"
   unset -f dependency as src install hook depends
-  unset -n current_dep
-  unset current_dep
+  unset -n dependency
+  unset dependency
   export PATH="$oldpath"
+}
+
+declare -A resolver_fetch_sources=(
+  [git]="git"
+)
+
+resolver.install_dependencies()
+{
+  for dep in "${project_dependencies}"; do
+    declare -n dependency="$dep"
+    
+    echo
+    utils.echo_color cyan "Installing $(utils.color green "${dependency[name]}")"
+    echo
+    utils.color cyan ""
 }

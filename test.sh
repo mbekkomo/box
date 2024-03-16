@@ -14,4 +14,9 @@ spin()
   kill "$pid"
 }
 
-spin sleep 10
+. src/utils/string.sh
+. src/utils/builtin.sh
+. src/utils/ansi.sh
+. src/resolver.sh
+
+resolver.parse_boxfile
